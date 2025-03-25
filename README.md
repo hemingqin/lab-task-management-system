@@ -1,4 +1,4 @@
-# Lab Team Task Management System
+## Lab Team Task Management System
 
 A personal project designed for Nanophotonics lab team work in University of Victoria, could be used as a regular task management system, featuring real-time collaboration, Kanban-like boards, and detailed analytics.
 
@@ -13,7 +13,7 @@ A personal project designed for Nanophotonics lab team work in University of Vic
 
 ## Technology Stack
 
-## Frontend
+### Frontend
 
 - React 18
 - Material-UI for components
@@ -34,14 +34,14 @@ A personal project designed for Nanophotonics lab team work in University of Vic
 - Celery for background tasks
 - Redis for caching
 
-### Prerequisites
+## Prerequisites
 
 - Python 3.8+
 - Node.js 16+
 - PostgreSQL 13+
 - Redis
 
-### Backend Setup
+## Backend Setup
 
 1. Create a virtual environment:
    python -m venv venv
@@ -62,7 +62,7 @@ A personal project designed for Nanophotonics lab team work in University of Vic
 5. Run the development server:
    flask run
 
-### Frontend Setup
+## Frontend Setup
 
 1. Install dependencies:
    cd frontend
