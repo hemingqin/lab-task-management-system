@@ -1,50 +1,19 @@
 # Lab Team Task Management System
 
-A comprehensive task management system designed for laboratory teams, featuring real-time collaboration, Kanban boards, and detailed analytics.
+A personal project designed for Nanophotonics lab team work in University of Victoria, could be used as a regular task management system, featuring real-time collaboration, Kanban-like boards, and detailed analytics.
 
 ## Features
 
-- **User Authentication & Authorization**
-
-  - JWT-based authentication
-  - Role-based access control (Admin, Team Lead, Team Member)
-  - Secure password handling
-
-- **Project Management**
-
-  - Create and manage multiple projects
-  - Assign team members to projects
-  - Track project progress and deadlines
-
-- **Task Management**
-
-  - Kanban board for visual task tracking
-  - Task assignments and priority levels
-  - File attachments and comments
-  - Real-time updates using WebSocket
-
-- **Team Collaboration**
-
-  - Real-time notifications
-  - Comment system
-  - File sharing
-  - Team member mentions
-
-- **Analytics & Reporting**
-
-  - Task completion metrics
-  - Team performance analytics
-  - Project progress tracking
-  - Custom report generation
-
-- **Calendar Integration**
-  - Task scheduling
-  - Deadline tracking
-  - Calendar view for tasks and projects
+1.JWT-based User Authentication & Authorization
+2.Project Management
+3.Kanban board like Task Management (The borad part needs to be optimized )
+4.Analytics & Reporting
+5.Calendar Integration (Calendar view needs to be optimized)
+6.AWS (Needs to be integrated in the furture)
 
 ## Technology Stack
 
-### Frontend
+## Frontend
 
 - React 18
 - Material-UI for components
@@ -64,9 +33,6 @@ A comprehensive task management system designed for laboratory teams, featuring 
 - JWT for authentication
 - Celery for background tasks
 - Redis for caching
-- AWS S3 for file storage
-
-## Setup Instructions
 
 ### Prerequisites
 
@@ -78,22 +44,12 @@ A comprehensive task management system designed for laboratory teams, featuring 
 ### Backend Setup
 
 1. Create a virtual environment:
-
-   ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
+   source venv/bin/activate # On Windows: venv\Scripts\activate
 2. Install dependencies:
-
-   ```bash
    cd backend
    pip install -r requirements.txt
-   ```
-
 3. Set up environment variables (create .env file):
-
-   ```
    SECRET_KEY=your-secret-key
    JWT_SECRET_KEY=your-jwt-secret
    DATABASE_URL=postgresql://postgres:password@localhost/lab_tasks
@@ -101,43 +57,21 @@ A comprehensive task management system designed for laboratory teams, featuring 
    AWS_ACCESS_KEY_ID=your-aws-key
    AWS_SECRET_ACCESS_KEY=your-aws-secret
    AWS_BUCKET_NAME=your-bucket-name
-   ```
-
 4. Initialize the database:
-
-   ```bash
    flask db upgrade
-   ```
-
 5. Run the development server:
-   ```bash
    flask run
-   ```
 
 ### Frontend Setup
 
 1. Install dependencies:
-
-   ```bash
    cd frontend
    npm install
-   ```
 
 2. Start the development server:
-   ```bash
    npm start
-   ```
 
-## Development Guidelines
-
-### Code Style
-
-- Backend: Follow PEP 8 guidelines
-- Frontend: Use ESLint and Prettier configurations
-- Use meaningful variable and function names
-- Write comprehensive documentation
-
-### Testing
+## Testing
 
 - Write unit tests for all new features
 - Run tests before committing:
@@ -149,75 +83,3 @@ A comprehensive task management system designed for laboratory teams, featuring 
   # Frontend tests
   npm test
   ```
-
-### Git Workflow
-
-1. Create feature branch from develop
-2. Make changes and test
-3. Submit pull request
-4. Code review
-5. Merge to develop
-
-## API Documentation
-
-### Authentication Endpoints
-
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-
-### Project Endpoints
-
-- GET /api/projects
-- POST /api/projects
-- GET /api/projects/<id>
-- PUT /api/projects/<id>
-- DELETE /api/projects/<id>
-
-### Task Endpoints
-
-- GET /api/tasks
-- POST /api/tasks
-- GET /api/tasks/<id>
-- PUT /api/tasks/<id>
-- DELETE /api/tasks/<id>
-
-### WebSocket Events
-
-- task_update
-- new_comment
-- notification
-
-## Deployment
-
-### Backend Deployment
-
-1. Set up PostgreSQL database
-2. Configure environment variables
-3. Run migrations
-4. Start Gunicorn server
-5. Configure Nginx
-
-### Frontend Deployment
-
-1. Build production bundle:
-   ```bash
-   npm run build
-   ```
-2. Serve static files through Nginx
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
-
-## License
-
-MIT License
-
-## Support
-
-For support, email support@labtasks.com or create an issue in the repository.
