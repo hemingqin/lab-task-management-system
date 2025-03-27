@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..models import Task, db, User, Project
 from datetime import datetime
+from sqlalchemy import func
 import logging
 
 logger = logging.getLogger(__name__)
@@ -157,3 +158,31 @@ def delete_task(task_id):
     db.session.commit()
     
     return jsonify({'message': 'Task deleted successfully'}), 200 
+
+@tasks_bp.route('/metrics', methods=['GET'])
+@jwt_required()
+def get_tasks_metrics():
+    try:
+        # Count all the tasks
+        total_tasks = Task.query.count()
+        
+        # Count tasks by status
+        statuses = db.session.query(Task.status, func.count(Task.id))\
+                             .group_by(Task.status).all()
+        status_counts = {status: count for status, count in statuses}
+        
+        # Calculate average estimated and actual hours
+        avg_estimated_hours = db.session.query(func.avg(Task.estimated_hours)).scalar()
+        avg_actual_hours = db.session.query(func.avg(Task.actual_hours)).scalar()
+        
+        metrics = {
+            'total_tasks': total_tasks,
+            'status_counts': status_counts,
+            'avg_estimated_hours': float(avg_estimated_hours) if avg_estimated_hours else None,
+            'avg_actual_hours': float(avg_actual_hours) if avg_actual_hours else None,
+        }
+        
+        return jsonify(metrics), 200
+    except Exception as e:
+        logger.error(f"Error in metrics endpoint: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
