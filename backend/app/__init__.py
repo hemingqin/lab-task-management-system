@@ -1,21 +1,12 @@
 from flask import Flask, send_from_directory, send_file, request, make_response, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_migrate import Migrate
 import os
 from dotenv import load_dotenv
-import logging
-from datetime import timedelta
 from .models import User, db
-
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+from logging_config import setup_logger
 
 # Load environment variables
 load_dotenv()
@@ -24,12 +15,16 @@ load_dotenv()
 
 jwt = JWTManager()
 socketio = SocketIO()
+logger = None
 
 def create_app():
     try:
         # Initialize Flask app with static folder
         app = Flask(__name__, static_folder='../../frontend/build', static_url_path='')
         
+        # Configure logging
+        logger = setup_logger(app)
+
         # Configure the Flask application
         app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key')
         app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://postgres:hemingqin@localhost/lab_tasks')
