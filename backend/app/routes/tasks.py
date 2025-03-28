@@ -12,7 +12,7 @@ tasks_bp = Blueprint('tasks', __name__)
 @jwt_required()
 def get_tasks():
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         logger.info(f"Get tasks request received for user ID: {current_user_id}")
         
         if not current_user_id:
@@ -54,7 +54,7 @@ def get_tasks():
 @jwt_required()
 def create_task():
     data = request.get_json()
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     
     # Verify project exists
     project = Project.query.get(data['project_id'])
@@ -62,13 +62,16 @@ def create_task():
         return jsonify({'error': 'Project not found'}), 404
     
     task = Task(
+        creator_id = current_user_id,
         title=data['title'],
         description=data.get('description', ''),
         status=data.get('status', 'todo'),
         priority=data.get('priority', 'medium'),
         due_date=datetime.fromisoformat(data['due_date']) if data.get('due_date') else None,
-        assigned_to_id=data.get('assigned_to_id'),
-        project_id=data['project_id']
+        #assigned_to_id=data.get('assigned_to_id'),
+        assigned_to_id=current_user_id,  # Default to the creator, but needs to be optimized in the furture
+        project_id=data.get('project_id'),
+        project_name = data.get('project_name')
     )
     
     db.session.add(task)
@@ -89,7 +92,7 @@ def create_task():
 @jwt_required()
 def get_task(task_id):
     task = Task.query.get_or_404(task_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     
     if user.role != 'admin' and task.assigned_to_id != current_user_id:
@@ -110,7 +113,7 @@ def get_task(task_id):
 @jwt_required()
 def update_task(task_id):
     task = Task.query.get_or_404(task_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     
     if user.role != 'admin' and task.assigned_to_id != current_user_id:
@@ -148,7 +151,7 @@ def update_task(task_id):
 @jwt_required()
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     
     if user.role != 'admin':

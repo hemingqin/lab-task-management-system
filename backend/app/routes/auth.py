@@ -119,7 +119,7 @@ def login():
 def get_current_user():
     try:
         # Get the current user ID using get_jwt_identity()
-        current_user_id = str(get_jwt_identity())
+        current_user_id = int(get_jwt_identity())
         logger.debug(f'Current user ID: {current_user_id} (type: {type(current_user_id)})')
         
         user = User.query.get(int(current_user_id))
@@ -140,7 +140,7 @@ def get_current_user():
 @auth_bp.route('/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     data = request.get_json()
     

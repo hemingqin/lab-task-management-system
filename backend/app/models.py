@@ -89,6 +89,7 @@ class Task(db.Model):
     completed_at = db.Column(db.DateTime)
     estimated_hours = db.Column(db.Float)
     actual_hours = db.Column(db.Float)
+    project_name = db.Column(db.String(255))
     
     # Foreign Keys
     assigned_to_id = db.Column(db.Integer, db.ForeignKey('users.id'))

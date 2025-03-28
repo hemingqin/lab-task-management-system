@@ -66,9 +66,27 @@ function Projects() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/api/projects`, formData);
-      const response = await axios.get(`${API_URL}/api/projects`);
-      setProjects(response.data);
+      const token = localStorage.getItem('token');
+    console.log('Creating project with token:', token);
+
+    // 1. Capture the response from the POST request:
+    const postResponse = await axios.post(`${API_URL}/api/projects`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log('Project created successfully:', postResponse.data);
+
+    // 2. Fetch the updated project list:
+    const getResponse = await axios.get(`${API_URL}/api/projects`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log('Get projects successfully:', getResponse.data);
+
+    // 3. Update the state with the new projects array:
+    setProjects(getResponse.data);
       handleClose();
     } catch (error) {
       setError('Failed to create project');
@@ -78,7 +96,12 @@ function Projects() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`${API_URL}/api/projects/${id}`);
+        const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
+        await axios.delete(`${API_URL}/api/projects/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         fetchProjects();
       } catch (err) {
         setError('Failed to delete project');

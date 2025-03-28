@@ -11,7 +11,7 @@ projects_bp = Blueprint('projects', __name__)
 @jwt_required()
 def get_projects():
     try:
-        current_user_id = get_jwt_identity()
+        current_user_id = int(get_jwt_identity())
         if not current_user_id:
             return jsonify({'error': 'Authentication required'}), 401
 
@@ -23,10 +23,9 @@ def get_projects():
             projects = Project.query.all()
         else:
             # Get projects where user is either creator or has assigned tasks
-            projects = Project.query.join(Task).filter(
-                (Project.creator_id == current_user_id) |
-                (Task.assigned_to_id == current_user_id)
-            ).distinct().all()
+            created_by_user = Project.query.filter(Project.creator_id == current_user_id)
+            assigned_to_user = Project.query.join(Task).filter(Task.assigned_to_id == current_user_id)
+            projects = created_by_user.union(assigned_to_user).distinct().all()
         
         return jsonify([{
             'id': project.id,
@@ -45,8 +44,8 @@ def get_projects():
 @jwt_required()
 def create_project():
     data = request.get_json()
-    current_user_id = get_jwt_identity()
-    
+    current_user_id = int(get_jwt_identity())
+    logger.info(f"Creating project for user {current_user_id}: {data}")
     project = Project(
         name=data['name'],
         description=data.get('description', ''),
@@ -71,7 +70,7 @@ def create_project():
 @jwt_required()
 def get_project(project_id):
     project = Project.query.get_or_404(project_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     
     if user.role != 'admin' and project.creator_id != current_user_id:
@@ -106,7 +105,7 @@ def get_project(project_id):
 @jwt_required()
 def update_project(project_id):
     project = Project.query.get_or_404(project_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
     
     if user.role != 'admin' and project.creator_id != current_user_id:
@@ -137,10 +136,13 @@ def update_project(project_id):
 @jwt_required()
 def delete_project(project_id):
     project = Project.query.get_or_404(project_id)
-    current_user_id = get_jwt_identity()
+    current_user_id = int(get_jwt_identity())
     user = User.query.get(current_user_id)
+    print(f"DEBUG: Deleting project {project.id} with creator {project.creator_id}. "
+      f"Current user is {current_user_id}, role is {user.role}")
     
     if user.role != 'admin' and project.creator_id != current_user_id:
+        logger.warning(f"Unauthorized attempt to delete project {project.id} by user {current_user_id}")
         return jsonify({'error': 'Unauthorized'}), 403
     
     # Delete all tasks associated with the project
