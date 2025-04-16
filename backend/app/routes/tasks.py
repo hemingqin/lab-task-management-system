@@ -11,6 +11,7 @@ tasks_bp = Blueprint('tasks', __name__)
 @tasks_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_tasks():
+    
     try:
         current_user_id = int(get_jwt_identity())
         logger.info(f"Get tasks request received for user ID: {current_user_id}")

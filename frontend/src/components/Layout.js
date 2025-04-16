@@ -22,6 +22,7 @@ import {
   Folder as ProjectIcon,
   Person as ProfileIcon,
   Logout as LogoutIcon,
+  CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -32,6 +33,7 @@ const menuItems = [
   { text: 'Projects', icon: <ProjectIcon />, path: '/projects' },
   { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
   { text: 'Profile', icon: <ProfileIcon />, path: '/profile' },
+  { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
 ];
 
 function Layout() {

@@ -13,7 +13,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import Tasks from './pages/Tasks';
 import Profile from './pages/Profile';
-
+import Calendar from './pages/Calendar';
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -57,6 +57,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="projects" element={<Projects />} />
                 <Route path="tasks" element={<Tasks />} />
+                <Route path="calendar" element={<Calendar />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
             </Routes>

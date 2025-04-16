@@ -17,11 +17,15 @@ jwt = JWTManager()
 socketio = SocketIO()
 logger = None
 
+
 def create_app():
     try:
         # Initialize Flask app with static folder
-        app = Flask(__name__, static_folder='../../frontend/build', static_url_path='')
+        build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../frontend/build'))
+        print(f"Static folder path: {build_dir}")
         
+        app = Flask(__name__, static_folder=build_dir, static_url_path='')
+
         # Configure logging
         logger = setup_logger(app)
 
@@ -55,6 +59,7 @@ def create_app():
         # Debug logging for requests
         @app.before_request
         def log_request_info():
+            print(f"Request path: {request.path}")
             logger.debug('Headers: %s', dict(request.headers))
             logger.debug('Method: %s, Path: %s', request.method, request.path)
             if request.is_json:
@@ -65,10 +70,6 @@ def create_app():
         from .routes.tasks import tasks_bp
         from .routes.projects import projects_bp
         
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
-        app.register_blueprint(tasks_bp, url_prefix='/api/tasks')
-        app.register_blueprint(projects_bp, url_prefix='/api/projects')
-
         # Configure CORS
         CORS(app, resources={
             r"/api/*": {
@@ -77,11 +78,50 @@ def create_app():
                 "allow_headers": ["Content-Type", "Authorization"],
                 "supports_credentials": True,
                 "expose_headers": ["Content-Type", "Authorization"]
+            },
+             r"/*": {  
+                "origins": "*",
+                "methods": ["GET"]
             }
         })
         
+        app.register_blueprint(auth_bp, url_prefix='/api/auth')
+        app.register_blueprint(tasks_bp, url_prefix='/api/tasks')
+        app.register_blueprint(projects_bp, url_prefix='/api/projects')
+
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve(path):
+            app.logger.debug(f"Serving path: {path}")
+            try:
+               file_path = os.path.join(app.static_folder, path)
+               if os.path.exists(file_path) and os.path.isfile(file_path):
+                return send_from_directory(app.static_folder, path)
+            except:
+                pass
+            
+            try:
+                 return send_from_directory(app.static_folder, 'index.html')
+            except Exception as e:
+                 app.logger.error(f"Error serving index.html: {str(e)}")
+                 return "Error serving application", 500
+
+        #Handle 404 errors for API routes
+        @app.errorhandler(404)
+        def handle_404(e):
+            print(f"404 handler triggered for: {request.path}")
+            if request.path.startswith('/api/'):
+               return jsonify({"error": "Not found"}), 404
+            else:
+                try:
+                    return send_from_directory(app.static_folder, 'index.html')
+                except Exception as ex:
+                      print(f"Error in 404 handler: {str(ex)}")
+                      return "Error serving application", 500
+        
         @app.before_request
         def handle_preflight():
+            print(f"Handling preflight request for path: {request.path}")
             if request.method == "OPTIONS":
                 response = make_response()
                 response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
@@ -101,27 +141,6 @@ def create_app():
                 response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
                 response.headers['Access-Control-Max-Age'] = '3600'
             return response
-
-        # Define the build directory path
-        build_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../frontend/build'))
-        
-        @app.route('/', defaults={'path': ''})
-        @app.route('/<path:path>')
-        def serve(path):
-            if path.startswith('api/'):
-                return {"error": "Not Found"}, 404
-            
-            try:
-                # First try to serve the exact file
-                file_path = os.path.join(build_dir, path)
-                if os.path.exists(file_path) and os.path.isfile(file_path):
-                    return send_from_directory(build_dir, path)
-                
-                # If not found, serve index.html for client-side routing
-                return send_from_directory(build_dir, 'index.html')
-            except Exception as e:
-                logger.error(f"Error serving file {path}: {str(e)}")
-                return send_from_directory(build_dir, 'index.html')
 
         # Test database connection
         with app.app_context():
@@ -176,6 +195,8 @@ def create_app():
                 'message': 'The token is no longer valid'
             }), 401
         
+        for rule in app.url_map.iter_rules():
+          print(f"🔗 Route: {rule}")
         return app
     except Exception as e:
         logger.error(f"Error creating Flask app: {str(e)}")

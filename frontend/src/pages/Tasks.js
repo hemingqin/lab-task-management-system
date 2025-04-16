@@ -17,13 +17,31 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  Alert,
+  Divider,
+  Card,
+  CardContent,
+  CardActions,
+  IconButton,
 } from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  ArrowForward as ArrowForwardIcon,
+  ArrowBack as ArrowBackIcon,
+} from "@mui/icons-material";
 import axios from "axios";
 import { format } from "date-fns";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { id } from "date-fns/locale";
 
 const API_URL = "http://127.0.0.1:5000";
+
+const statusColumns = [
+  { id: "todo", title: "To Do" },
+  { id: "in_progress", title: "In Progress" },
+  { id: "completed", title: "Completed" },
+];
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -39,6 +57,59 @@ function Tasks() {
     due_date: "",
     project_id: "",
   });
+
+  const getTasksByStatus = () => {
+    const grouped = {};
+    statusColumns.forEach((column) => {
+      grouped[column.id] = tasks.filter((task) => task.status === column.id);
+    });
+    return grouped;
+  };
+
+  const tasksByStatus = getTasksByStatus();
+
+  const handleStatusChange = async (taskId, newStatus) => {
+    try {
+      const token = localStorage.getItem("token");
+      const task = tasks.find((task) => task.id === taskId);
+
+      if (!task) {
+        return;
+      }
+
+      const updatedTask = { ...task, status: newStatus };
+
+      await axios.put(
+        `${API_URL}/api/tasks/${taskId}`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setTasks(tasks.map((t) => (t.id === taskId ? updatedTask : t)));
+    } catch (error) {
+      console.error("Failed to update task status:", error);
+    }
+  };
+
+  const onDragEnd = (result) => {
+    const { destination, source, draggableId } = result;
+    if (
+      !destination ||
+      (destination.droppableId === source.droppableId &&
+        destination.index === source.index)
+    ) {
+      return;
+    }
+
+    if (destination.droppableId !== source.droppableId) {
+      const taskId = parseInt(draggableId.replace("task-", ""));
+      handleStatusChange(taskId, destination.droppableId);
+    }
+  };
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -198,46 +269,168 @@ function Tasks() {
         </Typography>
       )}
 
-      <Grid container spacing={3}>
-        {tasks.map((task) => (
-          <Grid item xs={12} md={6} key={task.id}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6">{task.title}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {task.description}
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-                <Chip
-                  label={task.priority}
-                  size="small"
-                  color={getPriorityColor(task.priority)}
-                />
-                <Chip
-                  label={task.status}
-                  size="small"
-                  color={getStatusColor(task.status)}
-                />
-              </Box>
-              {task.due_date && (
-                <Typography variant="body2" color="text.secondary">
-                  Due: {format(new Date(task.due_date), "MMM d, yyyy")}
-                </Typography>
-              )}
-              {task.project && (
-                <Typography variant="body2" color="text.secondary">
-                  Project: {task.project.name}
-                </Typography>
-              )}
-              <button
-                onClick={() => handleDelete(task.id)}
-                style={{ color: "red", marginTop: "1rem" }}
+      {/* Kanban Board */}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Grid container spacing={2}>
+          {statusColumns.map((column) => (
+            <Grid item xs={12} md={4} key={column.id}>
+              <Paper
+                sx={{
+                  p: 2,
+                  height: "100%",
+                  bgcolor:
+                    column.id === "completed"
+                      ? "rgba(76, 175, 80, 0.04)"
+                      : column.id === "in_progress"
+                        ? "rgba(255, 152, 0, 0.04)"
+                        : "rgba(0, 0, 0, 0.04)",
+                  border: "1px solid",
+                  borderColor:
+                    column.id === "completed"
+                      ? "rgba(76, 175, 80, 0.1)"
+                      : column.id === "in_progress"
+                        ? "rgba(255, 152, 0, 0.1)"
+                        : "rgba(0, 0, 0, 0.1)",
+                }}
               >
-                Delete
-              </button>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6">{column.title}</Typography>
+                  <Chip
+                    label={tasksByStatus[column.id].length}
+                    color={
+                      column.id === "completed"
+                        ? "success"
+                        : column.id === "in_progress"
+                          ? "warning"
+                          : "default"
+                    }
+                    size="small"
+                  />
+                </Box>
+                <Divider sx={{ mb: 2 }} />
+
+                <Droppable droppableId={column.id}>
+                  {(provided) => (
+                    <Box
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      sx={{ minHeight: "50vh" }}
+                    >
+                      {tasksByStatus[column.id].map((task, index) => (
+                        <Draggable
+                          key={`task-${task.id}`}
+                          draggableId={`task-${task.id}`}
+                          index={index}
+                        >
+                          {(provided) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              sx={{ mb: 2, "&:hover": { boxShadow: 3 } }}
+                            >
+                              <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                  {task.title}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ mb: 1 }}
+                                >
+                                  {task.description}
+                                </Typography>
+                                <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
+                                  <Chip
+                                    label={task.priority}
+                                    size="small"
+                                    color={getPriorityColor(task.priority)}
+                                  />
+                                </Box>
+                                {task.due_date && (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    Due:{" "}
+                                    {format(
+                                      new Date(task.due_date),
+                                      "MMM d, yyyy"
+                                    )}
+                                  </Typography>
+                                )}
+                                {task.project && (
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    Project: {task.project.name}
+                                  </Typography>
+                                )}
+                              </CardContent>
+                              <CardActions
+                                sx={{ justifyContent: "space-between" }}
+                              >
+                                <Box>
+                                  {column.id !== "todo" && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          task.id,
+                                          column.id === "in_progress"
+                                            ? "todo"
+                                            : "in_progress"
+                                        )
+                                      }
+                                    >
+                                      <ArrowBackIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                  {column.id !== "completed" && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleStatusChange(
+                                          task.id,
+                                          column.id === "todo"
+                                            ? "in_progress"
+                                            : "completed"
+                                        )
+                                      }
+                                    >
+                                      <ArrowForwardIcon fontSize="small" />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDelete(task.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </CardActions>
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </Box>
+                  )}
+                </Droppable>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      </DragDropContext>
 
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Create New Task</DialogTitle>
